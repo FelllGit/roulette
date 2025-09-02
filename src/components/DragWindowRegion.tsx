@@ -15,15 +15,11 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   return (
     <div className="flex w-screen items-stretch justify-between">
       <div className="draglayer w-full">
-        {title && !isMacOS() && (
-          <div className="flex flex-1 p-2 text-xs whitespace-nowrap text-gray-400 select-none">
-            <h1 className="text-2xl font-bold">{title}</h1>
-          </div>
-        )}
         <div className="flex justify-between items-center p-4 border-b">
           <h1 className="text-2xl font-bold">{title}</h1>
           <div className="flex items-center gap-2 no-drag">
             <ToggleTheme />
+            {!isMacOS() && <WindowButtons />}
           </div>
         </div>
       </div>
