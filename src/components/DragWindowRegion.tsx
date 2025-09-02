@@ -28,8 +28,6 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
             {/* Maintain the same height but do not display content */}
           </div>
         )}
-        
-      {!isMacOS() && <WindowButtons />}
     </div>
   );
 }
