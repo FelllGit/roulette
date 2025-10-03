@@ -50,7 +50,7 @@ export default function NewItemForm({ onAddItem, onCancel }: NewItemFormProps) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-card text-foreground placeholder:text-muted-foreground/70"
           placeholder="Введіть назву"
           autoFocus
         />
@@ -63,7 +63,7 @@ export default function NewItemForm({ onAddItem, onCancel }: NewItemFormProps) {
           type="number"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-card text-foreground placeholder:text-muted-foreground/70"
           placeholder="Введіть вартість"
           min="0"
           step="0.01"

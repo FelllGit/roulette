@@ -1,8 +1,37 @@
 import { RouletteItem } from "@/types/roulette";
 
-export function calculateItemWeight(price: number, maxPrice: number): number {
+export type WeightMode = "reversed" | "normal";
+
+export const CASINO_COLORS = [
+  "#C41E3A", // roulette red
+  "#101820", // roulette black
+  "#FFD700", // casino gold
+  "#0B3D2E", // table green
+  "#AF7A0F", // warm brass
+  "#1B5E20"  // vivid green
+];
+
+export const SPIN_DURATION_OPTIONS = [
+  { label: "10s", value: 10_000 },
+  { label: "30s", value: 30_000 },
+  { label: "60s", value: 60_000 },
+] as const;
+
+let casinoColorIndex = 0;
+
+export function calculateItemWeight(
+  price: number,
+  maxPrice: number,
+  mode: WeightMode = "reversed"
+): number {
   if (maxPrice === 0) return 1;
-  return Math.max(1, Math.floor((maxPrice - price + 1) / maxPrice * 100));
+
+  const ratio =
+    mode === "reversed"
+      ? (maxPrice - price + 1) / maxPrice
+      : price / maxPrice;
+
+  return Math.max(1, Math.round(ratio * 100));
 }
 
 export function calculateTotalWeight(items: RouletteItem[]): number {
@@ -61,39 +90,15 @@ export function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
 }
 
+casinoColorIndex = Math.floor(Math.random() * CASINO_COLORS.length);
+
+export function generateCasinoColor(): string {
+  const color = CASINO_COLORS[casinoColorIndex];
+  casinoColorIndex = (casinoColorIndex + 1) % CASINO_COLORS.length;
+  return color;
+}
+
 export function generatePastelColor(): string {
-  const hue = Math.floor(Math.random() * 360);
-  const saturation = Math.floor(Math.random() * 30) + 20;
-  const lightness = Math.floor(Math.random() * 20) + 70;
-  
-  const h = hue / 360;
-  const s = saturation / 100;
-  const l = lightness / 100;
-  
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs((h * 6) % 2 - 1));
-  const m = l - c / 2;
-  
-  let r = 0, g = 0, b = 0;
-  
-  if (h < 1/6) {
-    r = c; g = x; b = 0;
-  } else if (h < 2/6) {
-    r = x; g = c; b = 0;
-  } else if (h < 3/6) {
-    r = 0; g = c; b = x;
-  } else if (h < 4/6) {
-    r = 0; g = x; b = c;
-  } else if (h < 5/6) {
-    r = x; g = 0; b = c;
-  } else {
-    r = c; g = 0; b = x;
-  }
-  
-  const toHex = (c: number) => {
-    const hex = Math.round((c + m) * 255).toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  };
-  
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  // Preserve existing API while reusing the casino palette generator
+  return generateCasinoColor();
 }

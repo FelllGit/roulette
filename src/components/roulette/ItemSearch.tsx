@@ -30,7 +30,7 @@ export default function ItemSearch({ onSearch, onAddClick }: ItemSearchProps) {
             value={searchQuery}
             onChange={handleInputChange}
             placeholder="Пошук айтемів..."
-            className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-background"
+            className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-card text-foreground placeholder:text-muted-foreground/70"
           />
         </form>
         <button

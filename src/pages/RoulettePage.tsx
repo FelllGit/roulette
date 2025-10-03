@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { RouletteItem, RouletteState } from "@/types/roulette";
-import { selectItemByPosition } from "@/utils/roulette-utils";
+import { calculateItemWeight, selectItemByPosition, SPIN_DURATION_OPTIONS, WeightMode } from "@/utils/roulette-utils";
 import RouletteWheel from "@/components/roulette/RouletteWheel";
 import ItemManager from "@/components/roulette/ItemManager";
 import {
@@ -12,16 +12,18 @@ import DragWindowRegion from "@/components/DragWindowRegion";
 
 
 export default function RoulettePage() {
+  const [weightMode, setWeightMode] = useState<WeightMode>("reversed");
+  const [isEliminationMode, setIsEliminationMode] = useState(true);
+  const [spinDuration, setSpinDuration] = useState<number>(SPIN_DURATION_OPTIONS[0].value);
   const [state, setState] = useState<RouletteState>({
     items: [],
     isSpinning: false,
     selectedItem: null,
-    spinHistory: []
+    spinHistory: [],
+    lastWinner: null
   });
 
-
-
-  const updateItemWeights = (items: RouletteItem[]) => {
+  const applyWeightMode = (items: RouletteItem[], mode: WeightMode): RouletteItem[] => {
     if (items.length === 0) return items;
     
     const maxPrice = Math.max(...items.map(item => item.price));
@@ -29,41 +31,47 @@ export default function RoulettePage() {
     
     return items.map(item => ({
       ...item,
-      weight: Math.max(1, Math.floor((maxPrice - item.price + 1) / maxPrice * 100))
+      weight: calculateItemWeight(item.price, maxPrice, mode)
     }));
   };
 
   const handleAddItem = (newItem: RouletteItem) => {
-    const updatedItems = [...state.items, newItem];
-    const itemsWithWeights = updateItemWeights(updatedItems);
-    
-    setState(prev => ({
-      ...prev,
-      items: itemsWithWeights
-    }));
+    setState(prev => {
+      const updatedItems = [...prev.items, newItem];
+      const itemsWithWeights = applyWeightMode(updatedItems, weightMode);
+
+      return {
+        ...prev,
+        items: itemsWithWeights
+      };
+    });
   };
 
   const handleRemoveItem = (id: string) => {
-    const updatedItems = state.items.filter(item => item.id !== id);
-    const itemsWithWeights = updateItemWeights(updatedItems);
-    
-    setState(prev => ({
-      ...prev,
-      items: itemsWithWeights,
-      selectedItem: prev.selectedItem?.id === id ? null : prev.selectedItem
-    }));
+    setState(prev => {
+      const updatedItems = prev.items.filter(item => item.id !== id);
+      const itemsWithWeights = applyWeightMode(updatedItems, weightMode);
+
+      return {
+        ...prev,
+        items: itemsWithWeights,
+        selectedItem: prev.selectedItem?.id === id ? null : prev.selectedItem
+      };
+    });
   };
 
   const handleUpdateItem = (id: string, updatedItem: Partial<RouletteItem>) => {
-    const updatedItems = state.items.map(item => 
-      item.id === id ? { ...item, ...updatedItem } : item
-    );
-    const itemsWithWeights = updateItemWeights(updatedItems);
-    
-    setState(prev => ({
-      ...prev,
-      items: itemsWithWeights
-    }));
+    setState(prev => {
+      const updatedItems = prev.items.map(item =>
+        item.id === id ? { ...item, ...updatedItem } : item
+      );
+      const itemsWithWeights = applyWeightMode(updatedItems, weightMode);
+
+      return {
+        ...prev,
+        items: itemsWithWeights
+      };
+    });
   };
 
   const handleResetGame = () => {
@@ -71,13 +79,18 @@ export default function RoulettePage() {
       ...prev,
       items: [],
       selectedItem: null,
-      spinHistory: []
+      spinHistory: [],
+      lastWinner: null
     }));
   };
 
   const handleSpin = () => {
-    if (state.items.length <= 1) return;
-    
+    if (isEliminationMode) {
+      if (state.items.length <= 1) return;
+    } else if (state.items.length === 0) {
+      return;
+    }
+
     setState(prev => ({
       ...prev,
       isSpinning: true
@@ -88,21 +101,27 @@ export default function RoulettePage() {
     const selectedItem = selectItemByPosition(state.items, finalRotation);
     
     if (selectedItem) {
+      const eliminationMode = isEliminationMode;
       setState(prev => ({
         ...prev,
         isSpinning: false,
-        selectedItem
+        selectedItem,
+        lastWinner: selectedItem
       }));
       
       setTimeout(() => {
-        const updatedItems = state.items.filter(item => item.id !== selectedItem.id);
-        const itemsWithWeights = updateItemWeights(updatedItems);
-        
-        setState(prev => ({
-          ...prev,
-          items: itemsWithWeights,
-          spinHistory: [selectedItem, ...prev.spinHistory.slice(0, 9)]
-        }));
+        setState(prev => {
+          const updatedItems = eliminationMode
+            ? prev.items.filter(item => item.id !== selectedItem.id)
+            : prev.items;
+          const itemsWithWeights = applyWeightMode(updatedItems, weightMode);
+
+          return {
+            ...prev,
+            items: itemsWithWeights,
+            spinHistory: [selectedItem, ...prev.spinHistory.slice(0, 9)]
+          };
+        });
         
         setTimeout(() => {
           setState(prev => ({
@@ -120,9 +139,32 @@ export default function RoulettePage() {
     }
   };
 
+  const handleToggleWeightMode = () => {
+    setWeightMode(prevMode => {
+      const nextMode: WeightMode = prevMode === "reversed" ? "normal" : "reversed";
+      setState(prev => ({
+        ...prev,
+        items: applyWeightMode(prev.items, nextMode)
+      }));
+      return nextMode;
+    });
+  };
+
+  const handleToggleEliminationMode = () => {
+    setIsEliminationMode(prev => !prev);
+  };
+
   return (
     <div className="flex h-full flex-col">
-      <DragWindowRegion title="Рулетка" />
+      <DragWindowRegion
+        title="Рулетка"
+        weightMode={weightMode}
+        isEliminationMode={isEliminationMode}
+        onToggleWeightMode={handleToggleWeightMode}
+        onToggleEliminationMode={handleToggleEliminationMode}
+        spinDuration={spinDuration}
+        onSpinDurationChange={setSpinDuration}
+      />
       
       <ResizablePanelGroup direction="horizontal" className="flex-1 flex">
         <ResizablePanel className="w-2/3 p-6 flex flex-col items-center justify-center">
@@ -130,29 +172,14 @@ export default function RoulettePage() {
             items={state.items}
             isSpinning={state.isSpinning}
             selectedItem={state.selectedItem}
+            lastWinner={state.lastWinner}
+            hasSpins={state.spinHistory.length > 0}
+            isEliminationMode={isEliminationMode}
             onSpin={handleSpin}
             onSpinComplete={handleSpinComplete}
             onResetGame={handleResetGame}
+            spinDuration={spinDuration}
           />
-          
-          {state.spinHistory.length > 0 && (
-            <div className="mt-8 w-full max-w-md">
-              <h3 className="text-lg font-semibold mb-4 text-center">Історія випадінь</h3>
-              <div className="space-y-2">
-                {state.spinHistory.map((item, index) => (
-                  <div
-                    key={`${item.id}-${index}`}
-                    className="flex justify-between items-center p-2 bg-muted rounded"
-                  >
-                    <span>{item.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {item.price.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </ResizablePanel>
 
         <ResizableHandle withHandle />

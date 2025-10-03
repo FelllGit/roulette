@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { RouletteItem } from "@/types/roulette";
 import { useTranslation } from "react-i18next";
+import { CASINO_COLORS } from "@/utils/roulette-utils";
 
 interface RouletteProps {
   items: RouletteItem[];
@@ -67,13 +68,13 @@ export default function Roulette({ items, isSpinning, selectedItem }: RoulettePr
         <div
           className="w-0 h-0 border-l-[100px] border-r-[100px] border-b-[200px] border-transparent"
           style={{
-            borderBottomColor: `hsl(${(index * 137.5) % 360}, 70%, 60%)`,
+            borderBottomColor: item.color || CASINO_COLORS[index % CASINO_COLORS.length],
             transform: `rotate(${segmentAngle / 2}deg)`,
             transformOrigin: "0 0"
           }}
         />
         <div
-          className="absolute text-xs font-medium text-white"
+          className="absolute text-xs font-medium text-foreground"
           style={{
             left: "50%",
             top: "30%",
@@ -100,7 +101,12 @@ export default function Roulette({ items, isSpinning, selectedItem }: RoulettePr
         >
           {segments}
         </div>
-        <div className="absolute top-0 left-1/2 w-4 h-8 bg-red-500 transform -translate-x-1/2 -translate-y-1/2 z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[10%] z-10">
+          <div
+            className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[22px] border-l-transparent border-r-transparent"
+            style={{ borderTopColor: "hsl(var(--primary))" }}
+          />
+        </div>
       </div>
       
 

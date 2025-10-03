@@ -11,4 +11,5 @@ export interface RouletteState {
   isSpinning: boolean;
   selectedItem: RouletteItem | null;
   spinHistory: RouletteItem[];
+  lastWinner: RouletteItem | null;
 }

@@ -49,7 +49,7 @@ export default function ItemForm({ onAddItem }: ItemFormProps) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-card text-foreground placeholder:text-muted-foreground/70"
           placeholder={t("roulette.itemName")}
         />
       </div>
@@ -62,7 +62,7 @@ export default function ItemForm({ onAddItem }: ItemFormProps) {
           type="number"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-card text-foreground placeholder:text-muted-foreground/70"
           placeholder={t("roulette.itemPrice")}
           min="0"
           step="0.01"
