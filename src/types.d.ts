@@ -22,3 +22,8 @@ declare interface Window {
   themeMode: ThemeModeContext;
   electronWindow: ElectronWindow;
 }
+
+declare module "*.mp3" {
+  const src: string;
+  export default src;
+}

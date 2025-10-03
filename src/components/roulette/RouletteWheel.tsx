@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 import { LabelList, Pie, PieChart } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { CASINO_COLORS } from "@/utils/roulette-utils";
+import pointerTickSoundSrc from "@/assets/sounds/pointer-tick.mp3";
+import winChimeSoundSrc from "@/assets/sounds/win-chime.mp3";
 
-const POINTER_SOUND_SRC = "/sounds/pointer-tick.mp3";
-const WIN_SOUND_SRC = "/sounds/win-chime.mp3";
+const POINTER_SOUND_SRC = pointerTickSoundSrc;
+const WIN_SOUND_SRC = winChimeSoundSrc;
 const POINTER_OFFSET_DEGREES = 90;
 const CONFETTI_PIECES = 80;
 const CONFETTI_DURATION_MS = 1800;
@@ -218,7 +220,7 @@ export default function RouletteWheel({
         try {
           tickAudio.pause();
           tickAudio.currentTime = 0;
-        } catch (_error) {
+        } catch {
           /* browsers may block seek before metadata */
         }
         tickAudio.play().catch(() => {
@@ -501,20 +503,32 @@ export default function RouletteWheel({
           </ChartContainer>
         </div>
         <div
-          className="absolute top-0 left-1/2 z-30"
+          className="absolute top-0 left-1/2 z-50"
           style={{
             transform: `translate(-50%, -${pointerTranslateY}px)`
           }}
         >
-          <div
-            className="w-0 h-0 border-l-transparent border-r-transparent"
-            style={{
-              borderLeftWidth: pointerBase / 2,
-              borderRightWidth: pointerBase / 2,
-              borderTopWidth: pointerHeight,
-              borderTopColor: "hsl(var(--primary))"
-            }}
-          />
+          <div className="relative">
+            <div
+              className="w-0 h-0 border-transparent absolute"
+              style={{
+                borderLeftWidth: pointerBase / 2 + 4,
+                borderRightWidth: pointerBase / 2 + 4,
+                borderTopWidth: pointerHeight + 4,
+                borderTopColor: "#2C2C2C",
+                transform: "translate(-4px, -2px)"
+              }}
+            />
+            <div
+              className="w-0 h-0 border-transparent relative z-10"
+              style={{
+                borderLeftWidth: pointerBase / 2,
+                borderRightWidth: pointerBase / 2,
+                borderTopWidth: pointerHeight,
+                borderTopColor: "hsl(var(--primary))"
+              }}
+            />
+          </div>
         </div>
       </div>
       
