@@ -42,6 +42,7 @@ interface RouletteWheelProps {
   onSpin: () => void;
   onSpinComplete: (finalRotation: number) => void;
   onResetGame?: () => void;
+  onAcknowledgeElimination?: () => void;
   spinDuration: number;
 }
 
@@ -55,10 +56,11 @@ export default function RouletteWheel({
   onSpin,
   onSpinComplete,
   onResetGame,
+  onAcknowledgeElimination,
   spinDuration,
 }: RouletteWheelProps) {
   const wheelContainerRef = useRef<HTMLDivElement>(null);
-  const [wheelSize, setWheelSize] = useState(640);
+  const [wheelSize, setWheelSize] = useState(800);
   const [rotation, setRotation] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const pointerSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -466,7 +468,7 @@ export default function RouletteWheel({
       {confettiOverlay}
       <div
         ref={wheelContainerRef}
-        className="relative w-full max-w-[640px] aspect-square"
+        className="relative w-full max-w-[680px] aspect-square"
       >
         <div
           className="w-full h-full rounded-full border-4 border-primary relative overflow-hidden"
@@ -557,18 +559,24 @@ export default function RouletteWheel({
               <div className="mt-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
                 Слот було видалено з рулетки!
               </div>
-              <div className="mt-2 text-xs text-muted-foreground">
-                Видалення через 2s...
-              </div>
+              {isEliminationMode && items.length === 1 && (
+                <div className="mt-3 p-2 bg-primary/10 border border-primary/20 rounded text-primary text-sm">
+                  Це буде останній слот!
+                </div>
+              )}
+              {onAcknowledgeElimination && (
+                <Button
+                  onClick={onAcknowledgeElimination}
+                  className="mt-4"
+                  size="default"
+                >
+                  Ок
+                </Button>
+              )}
             </>
           ) : (
             <div className="mt-3 p-2 bg-accent/20 border border-accent/30 rounded text-accent-foreground text-sm">
               Слот залишається в грі!
-            </div>
-          )}
-          {isEliminationMode && items.length === 1 && (
-            <div className="mt-3 p-2 bg-primary/10 border border-primary/20 rounded text-primary text-sm">
-              Це буде останній слот!
             </div>
           )}
         </div>

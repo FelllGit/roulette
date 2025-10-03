@@ -112,27 +112,34 @@ export default function RoulettePage() {
         lastWinner: selectedItem
       }));
       
-      setTimeout(() => {
-        setState(prev => {
-          const updatedItems = eliminationMode
-            ? prev.items.filter(item => item.id !== selectedItem.id)
-            : prev.items;
-          const itemsWithWeights = applyWeightMode(updatedItems, weightMode);
+      if (eliminationMode) {
+        setTimeout(() => {
+          setState(prev => {
+            const updatedItems = prev.items.filter(item => item.id !== selectedItem.id);
+            const itemsWithWeights = applyWeightMode(updatedItems, weightMode);
 
-          return {
-            ...prev,
-            items: itemsWithWeights,
-            spinHistory: [selectedItem, ...prev.spinHistory.slice(0, 9)]
-          };
-        });
-        
+            return {
+              ...prev,
+              items: itemsWithWeights,
+              spinHistory: [selectedItem, ...prev.spinHistory.slice(0, 9)]
+            };
+          });
+        }, 1000);
+      } else {
         setTimeout(() => {
           setState(prev => ({
             ...prev,
-            selectedItem: null
+            spinHistory: [selectedItem, ...prev.spinHistory.slice(0, 9)]
           }));
-        }, 2000);
-      }, 1000);
+          
+          setTimeout(() => {
+            setState(prev => ({
+              ...prev,
+              selectedItem: null
+            }));
+          }, 2000);
+        }, 1000);
+      }
     } else {
       setState(prev => ({
         ...prev,
@@ -140,6 +147,13 @@ export default function RoulettePage() {
         selectedItem: null
       }));
     }
+  };
+
+  const handleAcknowledgeElimination = () => {
+    setState(prev => ({
+      ...prev,
+      selectedItem: null
+    }));
   };
 
   const handleToggleWeightMode = () => {
@@ -181,6 +195,7 @@ export default function RoulettePage() {
             onSpin={handleSpin}
             onSpinComplete={handleSpinComplete}
             onResetGame={handleResetGame}
+            onAcknowledgeElimination={handleAcknowledgeElimination}
             spinDuration={spinDuration}
           />
         </ResizablePanel>
