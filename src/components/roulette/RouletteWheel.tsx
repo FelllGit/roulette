@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { RouletteItem } from "@/types/roulette";
 import { Button } from "@/components/ui/button";
 import { LabelList, Pie, PieChart } from "recharts";
@@ -49,13 +55,15 @@ export default function RouletteWheel({
   onResetGame,
   spinDuration,
 }: RouletteWheelProps) {
+  const wheelContainerRef = useRef<HTMLDivElement>(null);
+  const [wheelSize, setWheelSize] = useState(640);
   const [rotation, setRotation] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const pointerSoundRef = useRef<HTMLAudioElement | null>(null);
   const winSoundRef = useRef<HTMLAudioElement | null>(null);
   const lastPointerAngleRef = useRef<number | null>(null);
   const lastCelebratedIdRef = useRef<string | null>(null);
-  
+
   const { chartData, pointerBoundaries } = useMemo(() => {
     if (items.length === 0) {
       return {
@@ -122,6 +130,42 @@ export default function RouletteWheel({
       label: "Price",
     }
   };
+
+  useEffect(() => {
+    const node = wheelContainerRef.current;
+    if (!node) {
+      return;
+    }
+
+    const updateSize = () => {
+      const { width, height } = node.getBoundingClientRect();
+      const nextSize = Math.round(Math.min(width, height));
+      if (nextSize > 0) {
+        setWheelSize(nextSize);
+      }
+    };
+
+    updateSize();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => {
+        updateSize();
+      });
+      observer.observe(node);
+      return () => observer.disconnect();
+    }
+
+    const handleWindowResize = () => updateSize();
+    window.addEventListener("resize", handleWindowResize);
+    return () => window.removeEventListener("resize", handleWindowResize);
+  }, []);
+
+  const effectiveWheelSize = Math.max(240, wheelSize);
+  const pointerBase = Math.max(28, effectiveWheelSize * 0.06);
+  const pointerHeight = Math.max(48, effectiveWheelSize * 0.12);
+  const pointerTranslateY = pointerHeight * 0.55;
+  const pieOuterRadius = Math.max(0, effectiveWheelSize / 2 - 16);
+  const labelFontSize = Math.max(12, Math.round(effectiveWheelSize * 0.024));
 
 
   const primePointerSound = useCallback(() => {
@@ -418,45 +462,58 @@ export default function RouletteWheel({
   return (
     <div className="flex flex-col items-center space-y-6 w-full">
       {confettiOverlay}
-       <div className="relative w-[640px] h-[640px]">
-         <div
-           className="w-full h-full rounded-full border-4 border-primary relative overflow-hidden"
-           style={{
-             transform: `rotate(${rotation}deg)`,
-             transition: isAnimating ? "none" : "transform 0.1s ease-out"
-           }}
-         >
-           <ChartContainer
-             config={chartConfig}
-             className="[&_.recharts-text]:fill-foreground absolute inset-0 w-full h-full"
-           >
-             <PieChart width={630} height={630}>
-               <ChartTooltip
-                 content={<ChartTooltipContent nameKey="value" hideLabel />}
-               />
-               <Pie 
-                 data={chartData} 
-                 dataKey="value"
-                 cx="50%"
-                 cy="50%"
-                 outerRadius={311}
-                 innerRadius={0}
-               >
-                 <LabelList
-                   dataKey="name"
-                   className="fill-foreground text-sm font-medium"
-                   stroke="none"
-                   fontSize={14}
-                   formatter={(value: string) => value}
-                 />
-               </Pie>
-             </PieChart>
-           </ChartContainer>
-         </div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[40%] z-30">
+      <div
+        ref={wheelContainerRef}
+        className="relative w-full max-w-[640px] aspect-square"
+      >
+        <div
+          className="w-full h-full rounded-full border-4 border-primary relative overflow-hidden"
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transition: isAnimating ? "none" : "transform 0.1s ease-out"
+          }}
+        >
+          <ChartContainer
+            config={chartConfig}
+            className="[&_.recharts-text]:fill-foreground absolute inset-0 w-full h-full"
+          >
+            <PieChart>
+              <ChartTooltip
+                content={<ChartTooltipContent nameKey="value" hideLabel />}
+              />
+              <Pie
+                data={chartData}
+                dataKey="value"
+                cx="50%"
+                cy="50%"
+                outerRadius={pieOuterRadius}
+                innerRadius={0}
+              >
+                <LabelList
+                  dataKey="name"
+                  className="fill-foreground text-sm font-medium"
+                  stroke="none"
+                  fontSize={labelFontSize}
+                  formatter={(value: string) => value}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        </div>
+        <div
+          className="absolute top-0 left-1/2 z-30"
+          style={{
+            transform: `translate(-50%, -${pointerTranslateY}px)`
+          }}
+        >
           <div
-            className="w-0 h-0 border-l-[20px] border-r-[20px] border-t-[60px] border-l-transparent border-r-transparent"
-            style={{ borderTopColor: "hsl(var(--primary))" }}
+            className="w-0 h-0 border-l-transparent border-r-transparent"
+            style={{
+              borderLeftWidth: pointerBase / 2,
+              borderRightWidth: pointerBase / 2,
+              borderTopWidth: pointerHeight,
+              borderTopColor: "hsl(var(--primary))"
+            }}
           />
         </div>
       </div>
