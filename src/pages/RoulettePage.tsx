@@ -26,12 +26,15 @@ export default function RoulettePage() {
   const applyWeightMode = (items: RouletteItem[], mode: WeightMode): RouletteItem[] => {
     if (items.length === 0) return items;
     
-    const maxPrice = Math.max(...items.map(item => item.price));
+    const prices = items.map(item => item.price);
+    const maxPrice = Math.max(...prices);
+    const minPrice = Math.min(...prices);
+    
     if (maxPrice <= 0) return items.map(item => ({ ...item, weight: 1 }));
     
     return items.map(item => ({
       ...item,
-      weight: calculateItemWeight(item.price, maxPrice, mode)
+      weight: calculateItemWeight(item.price, maxPrice, minPrice, mode)
     }));
   };
 
