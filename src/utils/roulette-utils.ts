@@ -21,18 +21,17 @@ let casinoColorIndex = 0;
 
 export function calculateItemWeight(
   price: number,
-  maxPrice: number,
-  minPrice: number,
+  totalSum: number,
   mode: WeightMode = "reversed"
 ): number {
-  if (maxPrice === 0) return 1;
+  if (totalSum === 0) return 1;
 
   const ratio =
     mode === "reversed"
-      ? (maxPrice + minPrice - price) / maxPrice
-      : price / maxPrice;
+      ? (100 - (price / totalSum) * 100)
+      : price / totalSum;
 
-  return Math.max(1, Math.round(ratio * 100));
+  return Math.round(ratio * 100) / 100;
 }
 
 export function calculateTotalWeight(items: RouletteItem[]): number {

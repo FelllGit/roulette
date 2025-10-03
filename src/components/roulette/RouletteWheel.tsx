@@ -468,7 +468,7 @@ export default function RouletteWheel({
       {confettiOverlay}
       <div
         ref={wheelContainerRef}
-        className="relative w-full max-w-[680px] aspect-square"
+        className="relative w-full max-w-[680px] aspect-square pointer-events-none"
       >
         <div
           className="w-full h-full rounded-full border-4 border-primary relative overflow-hidden"
@@ -479,7 +479,7 @@ export default function RouletteWheel({
         >
           <ChartContainer
             config={chartConfig}
-            className="[&_.recharts-text]:fill-foreground absolute inset-0 w-full h-full"
+            className="[&_.recharts-text]:fill-foreground absolute inset-0 w-full h-full pointer-events-auto"
           >
             <PieChart>
               <ChartTooltip
@@ -505,7 +505,7 @@ export default function RouletteWheel({
           </ChartContainer>
         </div>
         <div
-          className="absolute top-0 left-1/2 z-50"
+          className="absolute top-0 left-1/2 !z-[99999] pointer-events-none"
           style={{
             transform: `translate(-50%, -${pointerTranslateY}px)`
           }}
