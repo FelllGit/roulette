@@ -30,6 +30,10 @@ export default function ItemManager({
     );
   }, [items, searchQuery]);
 
+  const formatPrice = (price: number) => {
+    return price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  };
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
@@ -50,7 +54,7 @@ export default function ItemManager({
         ) : (
           <>
             <div className="flex flex-col gap-2 flex-1 overflow-y-scroll">
-              <h3 className="text-lg font-semibold mb-4">Додані айтеми</h3>
+              <h3 className="text-lg font-semibold mb-4">Додані айтеми ({formatPrice(filteredItems.reduce((sum, item) => sum + item.price, 0))} гривень) </h3>
               {filteredItems.map((item) => (
                 <EditableItem
                   key={item.id}

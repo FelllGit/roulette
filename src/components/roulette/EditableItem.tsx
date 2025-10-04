@@ -20,6 +20,10 @@ export default function EditableItem({ item, onUpdate, onRemove }: EditableItemP
   const colorPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setPrice(item.price.toString());
+  }, [item.price]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
         setShowColorPicker(false);
@@ -33,13 +37,44 @@ export default function EditableItem({ item, onUpdate, onRemove }: EditableItemP
   }, []);
 
   const handleSave = () => {
-    const priceValue = parseFloat(price);
+    let priceValue: number;
+    const trimmedPrice = price.trim();
+    
+    if (trimmedPrice.startsWith('+') || trimmedPrice.startsWith('-')) {
+      const delta = parseFloat(trimmedPrice);
+      if (isNaN(delta)) return;
+      priceValue = item.price + delta;
+    } else if (trimmedPrice.includes('+')) {
+      const parts = trimmedPrice.split('+');
+      const base = parseFloat(parts[0]);
+      const addition = parseFloat(parts[1]);
+      if (isNaN(base) || isNaN(addition)) return;
+      priceValue = base + addition;
+    } else if (/\d\s*-\s*\d/.test(trimmedPrice)) {
+      const match = trimmedPrice.match(/^([\d.]+)\s*-\s*([\d.]+)$/);
+      if (match) {
+        const base = parseFloat(match[1]);
+        const subtraction = parseFloat(match[2]);
+        if (!isNaN(base) && !isNaN(subtraction)) {
+          priceValue = base - subtraction;
+        } else {
+          priceValue = parseFloat(trimmedPrice);
+        }
+      } else {
+        priceValue = parseFloat(trimmedPrice);
+      }
+    } else {
+      priceValue = parseFloat(trimmedPrice);
+    }
+    
     if (!name.trim() || isNaN(priceValue) || priceValue <= 0) return;
 
     onUpdate(item.id, {
       name: name.trim(),
       price: priceValue
     });
+    
+    setPrice(priceValue.toString());
   };
 
   const handleColorChange = (newColor: string) => {
@@ -88,18 +123,17 @@ export default function EditableItem({ item, onUpdate, onRemove }: EditableItemP
           Вартість:
         </Label>
         <Input
-          type="number"
+          type="text"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           onBlur={handleSave}
           onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           className="flex-1 h-4 px-3 py-2 border-0 rounded-none border-b-gray-500 focus:ring-0 hover:border-b-[1px] hover:border-b-gray-500 transition-all duration-75 focus:outline-none focus:border-b-[1px] focus:border-b-gray-300"
-          min="0"
-          step="0.01"
+          placeholder="100 або +10 або 1000+5 або 1000-5"
         />
         <div className="flex w-fit ">
           <div className="text-sm text-muted-foreground">
-            Вага: {item.weight}
+            Вага: {item.weight.toFixed(2)}
           </div>
         </div>
       </div>

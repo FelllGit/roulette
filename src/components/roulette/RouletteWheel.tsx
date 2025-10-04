@@ -7,11 +7,20 @@ import React, {
 } from "react";
 import { RouletteItem } from "@/types/roulette";
 import { Button } from "@/components/ui/button";
-import { LabelList, Pie, PieChart } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Pie, PieChart } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 import { CASINO_COLORS } from "@/utils/roulette-utils";
 import pointerTickSoundSrc from "@/assets/sounds/pointer-tick.mp3";
 import winChimeSoundSrc from "@/assets/sounds/win-chime.mp3";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 const POINTER_SOUND_SRC = pointerTickSoundSrc;
 const WIN_SOUND_SRC = winChimeSoundSrc;
@@ -20,6 +29,22 @@ const CONFETTI_PIECES = 80;
 const CONFETTI_DURATION_MS = 1800;
 const SPEED_MULTIPLIER = 4;
 const BASE_ANGULAR_SPEED_DEG_PER_MS = (SPEED_MULTIPLIER * 360) / 1000;
+const DEFAULT_MAX_WHEEL_BOUND = 720;
+
+function getResponsiveWheelBound(): number {
+  if (typeof window === "undefined") {
+    return DEFAULT_MAX_WHEEL_BOUND;
+  }
+
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const widthLimit = width < 1024 ? width * 0.92 : width * 0.6;
+  const heightLimit = height * 0.78;
+  const absoluteMax = 1150;
+  const base = Math.min(widthLimit, heightLimit, absoluteMax);
+
+  return Math.max(360, Math.round(base));
+}
 
 type ConfettiPiece = {
   id: number;
@@ -60,6 +85,7 @@ export default function RouletteWheel({
   spinDuration,
 }: RouletteWheelProps) {
   const wheelContainerRef = useRef<HTMLDivElement>(null);
+  const [maxWheelBound, setMaxWheelBound] = useState<number>(() => getResponsiveWheelBound());
   const [wheelSize, setWheelSize] = useState(800);
   const [rotation, setRotation] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -164,12 +190,33 @@ export default function RouletteWheel({
     return () => window.removeEventListener("resize", handleWindowResize);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const updateBounds = () => {
+      setMaxWheelBound((prev) => {
+        const next = getResponsiveWheelBound();
+        return prev === next ? prev : next;
+      });
+    };
+
+    updateBounds();
+    window.addEventListener("resize", updateBounds);
+    return () => window.removeEventListener("resize", updateBounds);
+  }, []);
+
   const effectiveWheelSize = Math.max(240, wheelSize);
   const pointerBase = Math.max(28, effectiveWheelSize * 0.06);
   const pointerHeight = Math.max(48, effectiveWheelSize * 0.12);
   const pointerTranslateY = pointerHeight * 0.55;
-  const pieOuterRadius = Math.max(0, effectiveWheelSize / 2 - 16);
-  const labelFontSize = Math.max(12, Math.round(effectiveWheelSize * 0.024));
+  const outerMargin = Math.max(16, Math.min(0, effectiveWheelSize));
+  const pieOuterRadius = Math.max(0, effectiveWheelSize / 1.9 - outerMargin);
+  const labelFontSize = Math.max(24, Math.round(effectiveWheelSize * 0.061));
+  const wheelBound = Number.isFinite(maxWheelBound)
+    ? maxWheelBound
+    : DEFAULT_MAX_WHEEL_BOUND;
 
 
   const primePointerSound = useCallback(() => {
@@ -468,7 +515,11 @@ export default function RouletteWheel({
       {confettiOverlay}
       <div
         ref={wheelContainerRef}
-        className="relative w-full max-w-[680px] aspect-square pointer-events-none"
+        className="relative w-full aspect-square pointer-events-none"
+        style={{
+          maxWidth: `${wheelBound}px`,
+          maxHeight: `${wheelBound}px`
+        }}
       >
         <div
           className="w-full h-full rounded-full border-4 border-primary relative overflow-hidden"
@@ -482,9 +533,6 @@ export default function RouletteWheel({
             className="[&_.recharts-text]:fill-foreground absolute inset-0 w-full h-full pointer-events-auto"
           >
             <PieChart>
-              <ChartTooltip
-                content={<ChartTooltipContent nameKey="value" hideLabel />}
-              />
               <Pie
                 data={chartData}
                 dataKey="value"
@@ -492,14 +540,127 @@ export default function RouletteWheel({
                 cy="50%"
                 outerRadius={pieOuterRadius}
                 innerRadius={0}
+                label={({ cx, cy, startAngle, endAngle, name }) => {
+                  const RADIAN = Math.PI / 180;
+                  const offsetAngle = startAngle + 3;
+                  const rotation = -startAngle;
+                  
+                  // Розраховуємо кут сектора
+                  let sectorAngle = endAngle - startAngle;
+                  if (sectorAngle < 0) sectorAngle += 360;
+                  
+                  // Не показуємо текст для дуже маленьких секторів
+                  const minAngleForText = 10;
+                  if (sectorAngle < minAngleForText) {
+                    return null;
+                  }
+                  
+                  // Максимальна довжина тексту (радіальний простір)
+                  const innerPadding = Math.max(30, pieOuterRadius * 0.15);
+                  const maxTextLength = pieOuterRadius - 100 - innerPadding;
+                  
+                  // Доступна висота для тексту
+                  const availableHeight = pieOuterRadius / 10;
+                  
+                  // Вимірюємо довжину тексту
+                  const canvas = document.createElement('canvas');
+                  const context = canvas.getContext('2d');
+                  if (!context) return null;
+                  
+                  // Масштабуємо розмір шрифту залежно від кута сектора
+                  const minAngleForFullSize = 60;
+                  const sectorSizeMultiplier = sectorAngle >= minAngleForFullSize 
+                    ? 1 
+                    : Math.max(0.5, sectorAngle / minAngleForFullSize);
+                  
+                  // Починаємо з базового розміру шрифту
+                  let fontSize = labelFontSize * sectorSizeMultiplier;
+                  let displayText = name;
+                  const minFontSize = 12;
+                  let foundFit = false;
+                  
+                  // Підбираємо розмір шрифту, щоб текст вмістився
+                  for (let size = fontSize; size >= minFontSize; size -= 2) {
+                    context.font = `800 ${size}px sans-serif`;
+                    const textWidth = context.measureText(name).width;
+                    
+                    if (textWidth <= maxTextLength) {
+                      fontSize = size * 1.1;
+                      displayText = name;
+                      foundFit = true;
+                      break;
+                    }
+                  }
+                  
+                  // Якщо навіть з мінімальним шрифтом не вміщується, обрізаємо
+                  if (!foundFit) {
+                    fontSize = minFontSize;
+                    context.font = `800 ${fontSize}px sans-serif`;
+                    let truncated = name;
+                    
+                    while (truncated.length > 0) {
+                      const testText = truncated.length < name.length ? truncated + '...' : truncated;
+                      const textWidth = context.measureText(testText).width;
+                      
+                      if (textWidth <= maxTextLength) {
+                        displayText = testText;
+                        break;
+                      }
+                      
+                      truncated = truncated.slice(0, -1);
+                    }
+                    
+                    // Якщо залишилось менше 2 символів (не рахуючи "..."), не показуємо текст
+                    if (truncated.length < 2) {
+                      return null;
+                    }
+                  }
+                  
+                  // Перевіряємо, чи текст вміщується по висоті
+                  if (fontSize > availableHeight) {
+                    fontSize = Math.max(12, Math.floor(availableHeight));
+                  }
+                  
+                  // Кінець тексту з відступом всередині від краю
+                  const textPadding = 20;
+                  const radius = pieOuterRadius - textPadding;
+                  const x = cx + radius * Math.cos(-offsetAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-offsetAngle * RADIAN);
+                  
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill="white"
+                      textAnchor="end"
+                      dominantBaseline="middle"
+                      fontSize={fontSize}
+                      fontWeight="800"
+                      transform={`rotate(${rotation}, ${x}, ${y})`}
+                      style={{
+                        textShadow: '0 0 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.8)',
+                        paintOrder: 'stroke fill',
+                      }}
+                    >
+                      {displayText}
+                      {/* {fontSize.toFixed(2)} */}
+                    </text>
+                  );
+                }}
               >
-                <LabelList
+                {/* <LabelList
+                  targetX={pieOuterRadius}
+                  targetY={pieOuterRadius}
                   dataKey="name"
                   className="fill-foreground text-sm font-medium"
-                  stroke="none"
+                  stroke="black"
                   fontSize={labelFontSize}
+                  // strokeWidth={2}
+                  fontWeight="500"
+                  textAnchor="start"
+                  dominantBaseline="middle"
                   formatter={(value: string) => value}
-                />
+                /> */}
               </Pie>
             </PieChart>
           </ChartContainer>
@@ -538,7 +699,7 @@ export default function RouletteWheel({
         onClick={handleSpinClick}
         disabled={isAnimating || items.length < (isEliminationMode ? 2 : 1) || selectedItem !== null}
         size="lg"
-        className="text-lg px-8 py-4 w-48"
+        className="text-lg px-8 py-4 w-48 z-[99999]"
       >
         {isAnimating
           ? "Крутиться..."
@@ -549,36 +710,40 @@ export default function RouletteWheel({
           : "Крутити рулетку!"}
       </Button>
       
-      {selectedItem && (
+      <AlertDialog open={selectedItem !== null && isEliminationMode} onOpenChange={(open) => {
+        if (!open && onAcknowledgeElimination) {
+          onAcknowledgeElimination();
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Результат</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="text-center">
+                  <p className="text-xl font-bold text-primary">{selectedItem?.name}</p>
+                  <p className="text-muted-foreground">Вартість: {selectedItem?.price.toFixed(2)}</p>
+                </div>
+                <div className="p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm text-center">
+                  Слот було видалено з рулетки!
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Ок</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {selectedItem && !isEliminationMode && (
         <div className="text-center p-4 bg-card rounded-lg border w-full animate-in slide-in-from-bottom-2 duration-300">
           <h3 className="text-lg font-semibold mb-2">Результат:</h3>
           <p className="text-xl font-bold text-primary">{selectedItem.name}</p>
           <p className="text-muted-foreground">Вартість: {selectedItem.price.toFixed(2)}</p>
-          {isEliminationMode ? (
-            <>
-              <div className="mt-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
-                Слот було видалено з рулетки!
-              </div>
-              {isEliminationMode && items.length === 1 && (
-                <div className="mt-3 p-2 bg-primary/10 border border-primary/20 rounded text-primary text-sm">
-                  Це буде останній слот!
-                </div>
-              )}
-              {onAcknowledgeElimination && (
-                <Button
-                  onClick={onAcknowledgeElimination}
-                  className="mt-4"
-                  size="default"
-                >
-                  Ок
-                </Button>
-              )}
-            </>
-          ) : (
-            <div className="mt-3 p-2 bg-accent/20 border border-accent/30 rounded text-accent-foreground text-sm">
-              Слот залишається в грі!
-            </div>
-          )}
+          <div className="mt-3 p-2 bg-accent/20 border border-accent/30 rounded text-accent-foreground text-sm">
+            Слот залишається в грі!
+          </div>
         </div>
       )}
 

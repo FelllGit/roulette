@@ -1,5 +1,5 @@
 import { RouletteItem } from "@/types/roulette";
-
+import Decimal from 'decimal.js';
 export type WeightMode = "reversed" | "normal";
 
 export const CASINO_COLORS = [
@@ -20,18 +20,25 @@ export const SPIN_DURATION_OPTIONS = [
 let casinoColorIndex = 0;
 
 export function calculateItemWeight(
+  itemsNumber: number,
   price: number,
   totalSum: number,
   mode: WeightMode = "reversed"
-): number {
-  if (totalSum === 0) return 1;
-
-  const ratio =
-    mode === "reversed"
-      ? (100 - (price / totalSum) * 100)
-      : price / totalSum;
-
-  return Math.round(ratio * 100) / 100;
+): Decimal {
+  if (totalSum === 0) return new Decimal(1);
+  if (itemsNumber === 1) return new Decimal(100);
+  
+  const priceDecimal = new Decimal(price);
+  const totalDecimal = new Decimal(totalSum);
+  const itemsDecimal = new Decimal(itemsNumber);
+  
+  const ratio = mode === "reversed"
+    ? new Decimal(100)
+        .minus(priceDecimal.div(totalDecimal).times(100))
+        .div(itemsDecimal.minus(1))
+    : priceDecimal.div(totalDecimal).times(100);
+  
+  return ratio;
 }
 
 export function calculateTotalWeight(items: RouletteItem[]): number {

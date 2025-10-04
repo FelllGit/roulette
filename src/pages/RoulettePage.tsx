@@ -32,7 +32,7 @@ export default function RoulettePage() {
     
     return items.map(item => ({
       ...item,
-      weight: calculateItemWeight(item.price, totalSum, mode)
+      weight: calculateItemWeight( items.length, item.price, totalSum, mode).toNumber()
     }));
   };
 
