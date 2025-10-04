@@ -30,6 +30,7 @@ const CONFETTI_DURATION_MS = 1800;
 const SPEED_MULTIPLIER = 4;
 const BASE_ANGULAR_SPEED_DEG_PER_MS = (SPEED_MULTIPLIER * 360) / 1000;
 const DEFAULT_MAX_WHEEL_BOUND = 720;
+const PIE_OUTER_RADIUS_PERCENT = "92%";
 
 function getResponsiveWheelBound(): number {
   if (typeof window === "undefined") {
@@ -211,8 +212,7 @@ export default function RouletteWheel({
   const pointerBase = Math.max(28, effectiveWheelSize * 0.06);
   const pointerHeight = Math.max(48, effectiveWheelSize * 0.12);
   const pointerTranslateY = pointerHeight * 0.55;
-  const outerMargin = Math.max(16, Math.min(0, effectiveWheelSize));
-  const pieOuterRadius = Math.max(0, effectiveWheelSize / 1.83 - outerMargin);
+  const pieOuterRadius = PIE_OUTER_RADIUS_PERCENT;
   const labelFontSize = Math.max(24, Math.round(effectiveWheelSize * 0.061));
   const wheelBound = Number.isFinite(maxWheelBound)
     ? maxWheelBound
@@ -555,12 +555,15 @@ export default function RouletteWheel({
                     return null;
                   }
                   
+                  // Розраховуємо фактичний радіус на основі центру графіка
+                  const actualRadius = cx * 0.92;
+                  
                   // Максимальна довжина тексту (радіальний простір)
-                  const innerPadding = Math.max(30, pieOuterRadius * 0.15);
-                  const maxTextLength = pieOuterRadius - 100 - innerPadding;
+                  const innerPadding = Math.max(30, actualRadius * 0.15);
+                  const maxTextLength = actualRadius - 100 - innerPadding;
                   
                   // Доступна висота для тексту
-                  const availableHeight = pieOuterRadius / 10;
+                  const availableHeight = actualRadius / 10;
                   
                   // Вимірюємо довжину тексту
                   const canvas = document.createElement('canvas');
@@ -623,7 +626,7 @@ export default function RouletteWheel({
                   
                   // Кінець тексту з відступом всередині від краю
                   const textPadding = 20;
-                  const radius = pieOuterRadius - textPadding;
+                  const radius = actualRadius - textPadding;
                   const x = cx + radius * Math.cos(-offsetAngle * RADIAN);
                   const y = cy + radius * Math.sin(-offsetAngle * RADIAN);
                   
