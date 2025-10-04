@@ -212,7 +212,7 @@ export default function RouletteWheel({
   const pointerHeight = Math.max(48, effectiveWheelSize * 0.12);
   const pointerTranslateY = pointerHeight * 0.55;
   const outerMargin = Math.max(16, Math.min(0, effectiveWheelSize));
-  const pieOuterRadius = Math.max(0, effectiveWheelSize / 1.9 - outerMargin);
+  const pieOuterRadius = Math.max(0, effectiveWheelSize / 1.83 - outerMargin);
   const labelFontSize = Math.max(24, Math.round(effectiveWheelSize * 0.061));
   const wheelBound = Number.isFinite(maxWheelBound)
     ? maxWheelBound
