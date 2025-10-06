@@ -10,7 +10,6 @@ import {
   } from "@/components/ui/resizable"
 import DragWindowRegion from "@/components/DragWindowRegion";
 
-
 export default function RoulettePage() {
   const [weightMode, setWeightMode] = useState<WeightMode>("reversed");
   const [isEliminationMode, setIsEliminationMode] = useState(true);
@@ -25,14 +24,22 @@ export default function RoulettePage() {
 
   const applyWeightMode = (items: RouletteItem[], mode: WeightMode): RouletteItem[] => {
     if (items.length === 0) return items;
-    
-    const totalSum = items.reduce((sum, item) => sum + item.price, 0);
-    
-    if (totalSum <= 0) return items.map(item => ({ ...item, weight: 1 }));
-    
+  
+    let totalSum: number;
+  
+    if (mode === "normal") {
+      totalSum = items.reduce((sum, item) => sum + item.price, 0);
+    } else {
+      totalSum = items.reduce((sum, item) => sum + (item.price > 0 ? 1 / item.price : 0), 0);
+    }
+  
+    if (totalSum <= 0) {
+      return items.map(item => ({ ...item, weight: 1 }));
+    }
+  
     return items.map(item => ({
       ...item,
-      weight: calculateItemWeight( items.length, item.price, totalSum, mode).toNumber()
+      weight: calculateItemWeight(items.length, item.price, totalSum, mode).toNumber()
     }));
   };
 

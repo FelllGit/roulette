@@ -550,7 +550,7 @@ export default function RouletteWheel({
                   if (sectorAngle < 0) sectorAngle += 360;
                   
                   // Не показуємо текст для дуже маленьких секторів
-                  const minAngleForText = 10;
+                  const minAngleForText = 7;
                   if (sectorAngle < minAngleForText) {
                     return null;
                   }
@@ -559,7 +559,7 @@ export default function RouletteWheel({
                   const actualRadius = cx * 0.92;
                   
                   // Максимальна довжина тексту (радіальний простір)
-                  const innerPadding = Math.max(30, actualRadius * 0.15);
+                  const innerPadding = Math.max(50, actualRadius * 0.35);
                   const maxTextLength = actualRadius - 100 - innerPadding;
                   
                   // Доступна висота для тексту
@@ -579,7 +579,7 @@ export default function RouletteWheel({
                   // Починаємо з базового розміру шрифту
                   let fontSize = labelFontSize * sectorSizeMultiplier;
                   let displayText = name;
-                  const minFontSize = 12;
+                  const minFontSize = 6;
                   let foundFit = false;
                   
                   // Підбираємо розмір шрифту, щоб текст вмістився

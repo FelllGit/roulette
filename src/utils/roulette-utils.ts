@@ -27,18 +27,14 @@ export function calculateItemWeight(
 ): Decimal {
   if (totalSum === 0) return new Decimal(1);
   if (itemsNumber === 1) return new Decimal(100);
-  
+
   const priceDecimal = new Decimal(price);
-  const totalDecimal = new Decimal(totalSum);
-  const itemsDecimal = new Decimal(itemsNumber);
-  
-  const ratio = mode === "reversed"
-    ? new Decimal(100)
-        .minus(priceDecimal.div(totalDecimal).times(100))
-        .div(itemsDecimal.minus(1))
-    : priceDecimal.div(totalDecimal).times(100);
-  
-  return ratio;
+
+  if (mode === "normal") {
+    return priceDecimal.div(totalSum).times(100);
+  } else {
+    return new Decimal(1).div(priceDecimal).div(totalSum).times(100);
+  }
 }
 
 export function calculateTotalWeight(items: RouletteItem[]): number {
