@@ -1,17 +1,12 @@
 # Roulette
-The Roulette app was created to introduce reversible slot weighting and a knockout gameplay mode, adding a dynamic and fair twist to the traditional roulette experience.
+Roulette is an app for livestream giveaways. Manage prizes on the fly and switch between normal and reversed odds.
 
 ## Table of Contents
 - [Technologies](#technologies)
 - [Usage](#usage)
 - [Development](#development)
-- [Testing](#testing)
-- [Deploy and CI/CD](#deploy-and-cicd)
 - [Contributing](#contributing)
-- [FAQ](#faq)
 - [To do](#to-do)
-- [Team](#team)
-- [Sources](#sources)
 
 ## Technologies
 
@@ -38,29 +33,15 @@ The Roulette app was created to introduce reversible slot weighting and a knocko
 - [TanStack Router](https://tanstack.com/router)
 - [Lucide](https://lucide.dev)
 
-
 ## Usage
 Run the Roulette desktop app locally or build distributables from this repository.
 
-### Run locally
-```sh
-npm install
-npm start
-```
-`npm start` compiles the renderer with Vite and launches the Electron window. If the window does not appear automatically, run the command again.
+Inside the app you can:
 
-Inside the app:
-- Use the right-hand panel to add new items, edit existing ones, and remove entries from the wheel.
-- Toggle `Зворотня вага` / `Нормальна вага` in the header to switch between reversed (cheaper items get higher odds) and normal weighting.
-- Enable or disable knockout gameplay with the `Режим вибування` control.
-- Choose a spin duration, then press `Крутити рулетку!` to spin. Results are kept in the history list so you can track the last winners.
-
-### Package build
-To produce installable artifacts for your platform, run:
-```sh
-npm run make
-```
-Electron Forge outputs installers and archives to the `out/` directory. Use `npm run package` if you only need an unpacked app bundle.
+- Add new ones with a price and color, edit or delete them;
+- Switch weighting modes to flip between inverted odds and classic proportional odds;
+- Turn elimination mode on or off;
+- Set how long each spin lasts.
 
 ## Development
 
@@ -78,13 +59,14 @@ npm install
 ```sh
 npm start
 ```
-This launches Electron Forge, which starts Vite for the renderer and rebuilds the main process on changes. Restart the command if the Electron window closes while you are developing.
+This launches Electron Forge, which starts Vite for the renderer and rebuilds the main process on changes.
 
-### Build renderer and main bundles
+### Package build
+To produce installable artifacts for your platform, run:
 ```sh
-npm run build
+npm run make
 ```
-The build task prepares production bundles in the `.vite/build/` directory without packaging installers. Use it to verify tree-shaking or to debug production-only issues.
+Electron Forge outputs installers and archives to the `out/` directory. Use `npm run package` if you only need an unpacked app bundle.
 
 ### Code quality scripts
 - `npm run lint` – run ESLint across the project.
