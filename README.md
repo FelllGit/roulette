@@ -89,7 +89,7 @@ The application was developed for a streamer because there were no suitable tool
 
 ## To do
 - [x] MVP
-- [ ] Refact project
 - [ ] Add linter
-- [ ] Rewrite CI/CD pipelines
+- [ ] Refact project
 - [ ] Implement i18
+- [ ] Add saves
